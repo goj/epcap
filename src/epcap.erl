@@ -33,7 +33,7 @@
 
 -define(SERVER, ?MODULE).
 
--export([start/0, start/1, start/2, stop/0]).
+-export([start/0, start/1, start/2, stop/0, stop/1]).
 -export([start_link/2]).
 -export([progname/0]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -55,9 +55,17 @@ start(Pid, Options) when is_pid(Pid), is_list(Options) ->
 stop() ->
     gen_server:call(?SERVER, stop).
 
+stop(Pid) ->
+    gen_server:call(Pid, stop).
+
 
 start_link(Pid, Options) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [Pid, Options], []).
+    case proplists:get_value(no_register, Options, false) of
+        true ->
+            gen_server:start_link(?MODULE, [Pid, Options], []);
+        false ->
+            gen_server:start_link({local, ?SERVER}, ?MODULE, [Pid, Options], [])
+    end.
 
 init([Pid, Options]) ->
     Chroot = chroot_path(),
